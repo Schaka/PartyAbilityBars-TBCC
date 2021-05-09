@@ -489,12 +489,26 @@ function PAB:ApplyAnchorSettings()
 end
 
 function PAB:GROUP_ROSTER_UPDATE()
+    self:UpdateAll();
+end
+
+function PAB:PARTY_LEADER_CHANGED()
+    self:UpdateAll();
+end
+
+function PAB:RAID_ROSTER_UPDATE()
+    self:UpdateAll();
+end
+
+function PAB:UpdateAll()
+
     if not pGUID then
         pGUID = UnitGUID("player")
     end
     if not pName then
         pName = UnitName("player")
     end
+
     self:RequestSync()
     self:UpdateAnchors()
 end
@@ -696,6 +710,8 @@ local function PAB_OnLoad(self)
     self:RegisterEvent("ARENA_COOLDOWNS_UPDATE")
     self:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
     self:RegisterEvent("GROUP_ROSTER_UPDATE")
+    self:RegisterEvent("RAID_ROSTER_UPDATE")
+    self:RegisterEvent("PARTY_LEADER_CHANGED")
     self:RegisterEvent("CHAT_MSG_ADDON")
     self:SetScript("OnEvent", function(self, event, ...)
         if self[event] then
