@@ -84,6 +84,9 @@ local iconPaths = {
     [28730] = 120, -- Arcane Torrent
     [20549] = 120, -- War Stomp
     [20594] = 180, -- Stoneform
+    [31687] = 180, -- Summon Water Elemental
+    [16979] = 15, -- Feral Charge
+    [15487] = 45, -- Silence
 }
 for k in pairs(iconPaths) do
     local faction = UnitFactionGroup("player")
