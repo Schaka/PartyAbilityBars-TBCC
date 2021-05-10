@@ -42,12 +42,6 @@ local InArena = function()
     return (select(2, IsInInstance()) == "arena")
 end
 
-local function wipe(t)
-    for k, v in pairs(t) do
-        t[k] = nil
-    end
-end
-
 local _iconPaths = {}
 local iconPaths = {
     [20594] = 1, -- Stoneform
@@ -287,10 +281,10 @@ function PAB:LoadPositions()
     end
 end
 
-local backdrop = { bgFile = "Interface\\Tooltips\\UI-Tooltip-Background", edgeFile = "", tile = true, }
+local backdrop = { bgFile = "Interface\\Tooltips\\UI-Tooltip-Background", edgeFile = "", tile = false }
 function PAB:CreateAnchors()
     for i = 1, 4 do
-        local anchor = CreateFrame("Frame", "PABAnchor" .. i, PABAnchor, BackdropTemplateMixin and "BackdropTemplate")
+        local anchor = CreateFrame("Frame", "PABAnchor" .. i, PABAnchor, "BackdropTemplate")
         anchor:SetBackdrop(backdrop)
         anchor:SetHeight(15)
         anchor:SetWidth(15)
@@ -318,7 +312,7 @@ function PAB:CreateAnchors()
         end)
         anchors[i] = anchor
 
-        local index = anchor:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+        local index = anchor:CreateFontString(anchor, "ARTWORK", "GameFontNormal")
         index:SetPoint("CENTER")
         index:SetText(i)
     end
@@ -382,30 +376,36 @@ end
 
 function PAB:ShowUsedAnchors()
     for i = 1, GetNumPartyMembers() do
-        anchors[i]:Show()
+        if anchors[i] then
+            anchors[i]:Show()
+        end
     end
 end
 
 function PAB:HideUnusedAnchors()
-    for k = GetNumPartyMembers() + 1, #anchors do
-        anchors[k]:Hide()
-        anchors[k].HideIcons()
+    for i = GetNumPartyMembers(), #anchors do
+        if anchors[i] then
+            anchors[i]:Hide()
+            anchors[i].HideIcons()
+        end
     end
 end
 
 function PAB:HideUnusedIcons(numIcons, icons)
-    for j = numIcons, #icons do
-        icons[j]:Hide()
-        icons[j].shouldShow = nil
+    for i = numIcons, #icons do
+        icons[i]:Hide()
+        icons[i].shouldShow = nil
     end
 end
 
 function PAB:UpdateAnchors()
+
     for i = 1, GetNumPartyMembers() do
         local _, class = UnitClass("party" .. i)
         if not class then
-            return
+            break
         end
+
         local anchor = anchors[i]
         anchor.GUID = UnitGUID("party" .. i)
         anchor.class = select(2, UnitClass("party" .. i))
@@ -422,27 +422,27 @@ function PAB:UpdateAnchors()
 
         local numIcons = 1
         local icons = anchor.icons
-
         if db.showTrinket then
             for ability, cooldown in pairs(db.abilities["ALL"]) do
-                self:UpdateAnchorIcon(anchor, ability, cooldown)
+                self:UpdateAnchorIcon(anchor, ability, cooldown, numIcons)
                 numIcons = numIcons + 1
             end
         end
 
         for ability, cooldown in pairs(abilities) do
-            self:UpdateAnchorIcon(anchor, ability, cooldown)
+            self:UpdateAnchorIcon(anchor, ability, cooldown, numIcons)
             numIcons = numIcons + 1
         end
         self:HideUnusedIcons(numIcons, icons)
     end
+
     self:ShowUsedAnchors()
     self:HideUnusedAnchors()
 
     self:ApplyAnchorSettings()
 end
 
-function PAB:UpdateAnchorIcon(anchor, ability, cooldown)
+function PAB:UpdateAnchorIcon(anchor, ability, cooldown, numIcons)
     local icons = anchor.icons
     local icon = icons[numIcons] or self:AppendIcon(icons, anchor)
     icon.texture:SetTexture(self:FindAbilityIcon(ability))
@@ -471,8 +471,8 @@ function PAB:ApplyAnchorSettings()
         PABIcons:Show()
     end
 
-    for k, v in ipairs(anchors) do
-        for k, v in ipairs(v.icons) do
+    for ke, ve in ipairs(anchors) do
+        for k, v in ipairs(ve.icons) do
             if db.hidden and not v.active then
                 v:Hide()
             elseif v.shouldShow then
@@ -517,6 +517,7 @@ function PAB:PLAYER_ENTERING_WORLD()
     if InArena() then
         self:StopAllIcons()
     end -- Cooldowns reset when joining arena
+
     if not pGUID then
         pGUID = UnitGUID("player")
     end
@@ -606,7 +607,7 @@ function PAB:ARENA_COOLDOWNS_UPDATE(unit)
         for i = 1, 4 do
             if guid == UnitGUID("party" .. i) then
                 local spellName = GetSpellInfo(spellID);
-                self:CheckAbility(anchors[i], spellName, duration)
+                self:CheckAbility(anchors[i], spellName, duration / 1000)
             end
         end
     end
@@ -702,6 +703,7 @@ function PAB:StopAllIcons()
         v.Stop()
     end
     wipe(activeGUIDS)
+    wipe(iconlist)
 end
 
 local function PAB_OnLoad(self)
@@ -710,8 +712,6 @@ local function PAB_OnLoad(self)
     self:RegisterEvent("ARENA_COOLDOWNS_UPDATE")
     self:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
     self:RegisterEvent("GROUP_ROSTER_UPDATE")
-    self:RegisterEvent("RAID_ROSTER_UPDATE")
-    self:RegisterEvent("PARTY_LEADER_CHANGED")
     self:RegisterEvent("CHAT_MSG_ADDON")
     self:SetScript("OnEvent", function(self, event, ...)
         if self[event] then
