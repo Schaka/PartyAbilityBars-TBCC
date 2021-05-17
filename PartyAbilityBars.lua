@@ -564,8 +564,8 @@ function PAB:CheckAbility(anchor, ability, cooldown)
     end
 end
 
-function PAB:CHAT_MSG_ADDON(prefix, message, dist, sender)
-    if dist == "INSTANCE_CHAT" and sender ~= pName then
+function PAB:CHAT_MSG_ADDON(prefix, message, channel, sender, target, zoneChannelId, localId, name, instanceId)
+    if channel == "INSTANCE_CHAT" and sender ~= pName then
         if prefix == CommPrefix then
             local GUID, ability, cooldown = match(message, "(.+)|(.+)|(.+)")
             if syncGUIDS[GUID] then
@@ -728,6 +728,10 @@ local function PAB_OnLoad(self)
     self:CreateOptions()
 
     self:SetScript("OnUpdate", PAB_OnUpdate)
+    
+    C_ChatInfo.RegisterAddonMessagePrefix(CommPrefix)
+    C_ChatInfo.RegisterAddonMessagePrefix(CommPrefix2)
+    C_ChatInfo.RegisterAddonMessagePrefix(CommPrefix3)
 
     print("Party Ability Bars by Kollektiv updated by Schaka for 2.4.3. Type /pab to open options")
 end
