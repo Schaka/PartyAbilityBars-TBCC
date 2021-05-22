@@ -1,5 +1,7 @@
-# PartyAbilityBars for Classic TBC by Schaka
-### Thanks to Kollektiv for doing the initial work
+# Abandoned in favor of https://github.com/Schaka/ArenaTeamTracker-TBCC
+
+## PartyAbilityBars for Classic TBC by Schaka
+#### Thanks to Kollektiv for doing the initial work
 
 Added:
 - race functionality
